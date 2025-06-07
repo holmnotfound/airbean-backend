@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import User from '../models/user.js';
+import bcrypt from 'bcrypt'
 
 export async function checkIfUserExists(userId) {
   try {
@@ -21,15 +22,17 @@ export async function checkIfUsernameExists(username) {
   }
 }
 
-export async function registerUser(username, password) {
+export async function registerUser(username, password, role) {
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);
     const shortUuid = uuidv4().split('-')[0];
-    const userId = `user-${shortUuid}`;
+    const userId = `${shortUuid}`;
 
     const newUser = new User({
       username,
-      password,
+      password: hashedPassword, 
       userId,
+      role
     });
 
     await newUser.save();

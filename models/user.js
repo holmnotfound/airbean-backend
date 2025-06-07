@@ -20,6 +20,10 @@ const userSchema = new Schema({
     minlength: 5,
     required: true,
   },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+  }
 });
 
 const User = mongoose.model('User', userSchema);

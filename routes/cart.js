@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { getProduct } from '../services/products.js';
 import { updateCart, getOrCreateCart, getAllCarts } from '../services/cart.js';
 import { calculateTotal } from '../utils/cartUtils.js';
+import authenticateToken from '../middlewares/authenticateToken.js';
 
 const router = Router();
 
@@ -49,69 +50,53 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// PUT item in cart
-router.put('/', async (req, res, next) => {
-  if (global.user) {
-    const { userId } = global.user;
-    const { prodId, qty } = req.body;
-    const product = await getProduct(prodId);
 
-    if (product) {
-      const cart = await updateCart(userId, {
-        prodId: product.prodId,
-        title: product.title,
-        price: product.price,
-        qty: qty,
-      });
-      if (cart) {
-        res.json({
-          success: true,
-          cart,
-        });
-      } else {
-        next({
-          status: 400,
-          message: 'Quantity must be provided as a positive integer',
-        });
-      }
-    } else {
-      next({
-        status: 400,
-        message: 'Invalid product ID',
-      });
-    }
+
+
+router.put('/', authenticateToken, async (req, res, next) => {
+  console.log("Authenticated user:", req.user);
+  const { prodId, qty, guestId } = req.body;
+
+  if (!Number.isInteger(qty) || qty <= 0) {
+    return next({ status: 400, message: 'Quantity must be a positive integer' });
+  }
+
+  const product = await getProduct(prodId);
+  if (!product) {
+    return next({ status: 400, message: 'Invalid product ID' });
+  }
+
+  let userId;
+
+  if (req.headers.authorization) {
+    // Token finns – försök verifiera
+    authenticateToken(req, res, async () => {
+      userId = req.user.userId;
+      await handleCartUpdate(userId);
+    });
   } else {
-    let { guestId, prodId, qty } = req.body;
-    const product = await getProduct(prodId);
+    // Gäst
+    userId = guestId || `guest-${uuid().substring(0, 5)}`;
+    await handleCartUpdate(userId);
+  }
 
-    if (!guestId) {
-      guestId = `guest-${uuid().substring(0, 5)}`;
+  async function handleCartUpdate(userId) {
+    const cart = await updateCart(userId, {
+      prodId: product.prodId,
+      title: product.title,
+      price: product.price,
+      qty,
+    });
+
+    if (!cart) {
+      return next({ status: 400, message: 'Could not update cart' });
     }
 
-    if (product) {
-      const cart = await updateCart(guestId, {
-        prodId: product.prodId,
-        title: product.title,
-        price: product.price,
-        qty: qty,
-      });
-      if (cart) {
-        res.json({
-          success: true,
-          cart,
-        });
-      } else {
-        next({
-          status: 400,
-          message: 'Quantity must be provided as a positive integer',
-        });
-      }
-    } else {
-      next({
-        status: 400,
-        message: 'Invalid product ID',
-      });
-    }
+    res.json({
+      success: true,
+      cart,
+      guestId: userId.startsWith('guest-') ? userId : undefined,
+    });
   }
 });
 
