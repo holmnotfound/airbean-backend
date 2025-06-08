@@ -1,0 +1,466 @@
+openapi: 3.0.1
+info:
+  title: AirBean API
+  description: API Documentation för AirBean API
+  version: 1.0.0
+components:
+  schemas:
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "68452a7f7c3b0a10f987cd09"
+        prodId:
+          type: string
+          example: "coldb"
+        title:
+          type: string
+          example: "Cold Brew"
+        desc:
+          type: string
+          example: "Kallbryggt kaffe med is"
+        price:
+          type: number
+          example: 69
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-06-07T14:00:00.000Z"
+        modifiedAt:
+          type: string
+          format: date-time
+          example: "2025-06-07T15:30:00.000Z"
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequestError:
+    description: Bad request from client
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Missing or invalid parameters in request
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: Requested resource not found
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login User
+      description: Authenticates user and returns JWT token.
+      requestBody:
+        requierd: true
+        content:
+          application/json:
+            schema:
+              type: object
+              requierd:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: maryjane
+                password:
+                  type: string
+                  example: spiderman
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              example:
+                success: true
+                message: Login Successful!
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                user:
+                  userId: user-123
+                  username: maryjane
+                  role: admin
+        '401':
+          description: Wrong username or password
+          content:
+            application/json:
+              example:
+                success: false
+                message: Wrong username or password
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Register New User
+      description: Creates a new user account with a username, password, and role.
+      requestBody:
+        requierd: true
+        content:
+          application/json:
+            schema:
+              type: object
+              requierd:
+                - username
+                - password
+                - role
+              properties:
+                username:
+                  type: string
+                  example: maryjane
+                password:
+                  type: string
+                  example: spiderman
+                role:
+                  type: string
+                  enum: [user, admin]
+                  example: user
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: Registration successful!
+                user:
+                  type: object
+                  properties:
+                    username:
+                    type: string
+                    example: maryjane
+                  userId:
+                    type: string
+                    example: user-abc123
+                  role:
+                    type: string
+                    example: user
+        '409':
+          description: Username already taken
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 409
+                  message:
+                    type: string
+                    example: Username already taken
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 500
+                  message:
+                    type: string
+                    example: Could not register new user
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+  /api/auth/logout:
+    get:
+      tags:
+        - Auth
+      summary: Logout User
+      description: Logs out the user. Token must be removed manually on client side since JWT is stateless.
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              example:
+                success: true
+                message: Logout successful. Please remove token on client side.
+        '404':
+            $ref: '#/components/responses/NotFoundError'
+  /api/cart:
+    get:
+      tags:
+        - Cart
+      summary: Get all carts
+      description: Returns a list of all carts in the system
+      responses:
+        '200':
+          description: List of carts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  carts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cartId:
+                          type: string
+                          example: user-123
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              prodId:
+                                type: string
+                                example: prod-ebest
+                              title:
+                                type: string
+                                example: Latte
+                              price:
+                                type: number
+                                example: 47
+                              qty:
+                                type: integer
+                                example: 2
+        '500':
+          description: Could not retrieve carts
+          content:
+            application/json:
+              example:
+                success: false
+                message: Could not retrieve carts
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Cart
+  /api/cart/{cartId}:
+    get:
+      tags:
+        - Cart
+  /api/menu:
+    get:
+      tags:
+        - Menu
+      summary: Get all products
+      description: Returns a list of all available products on the menu.
+      responses:
+        '200':
+          description: A list of products
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    post:
+      tags:
+        - Menu
+      summary: Add a new product (admin only)
+      description: Allows admin users to add a new product to the menu.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                desc:
+                  type: string
+                price:
+                  type: number
+              required:
+                - title
+                - price
+            example:
+              title: Cold Brew
+              desc: Kallbryggt kaffe med is
+              price: 49
+      responses:
+        '201':
+          description: Product added successfully
+          content:
+            application/json:
+              example:
+                success: true
+                message: Product added successfully
+                product:
+                  _id: "68452a7f7c3b0a10f987cd09"
+                  title: "Cold Brew"
+                  desc: "Kallbryggt kaffe med is"
+                  price: 49
+                  prodId: "a1b2c"
+                  createdAt: "2025-06-07T15:00:00.000Z"
+        '403':
+          description: Unauthorized (only admins allowed)
+          content:
+            application/json:
+              example:
+                success: false
+                message: Only admins can add products
+        '500':
+          description: Server error
+          content:
+            application/json:
+              example:
+                success: false
+                message: Could not save product
+  /api/menu/{prodId}:
+    put:
+      tags:
+        - Menu
+      summary: Update a product (admin only)
+      description: Updates product fields like title, desc, price. Requires admin privileges.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: prodId
+          required: true
+          schema:
+            type: string
+          description: ID of the product to update
+      requestBody:
+        required: true
+        content:
+          application/jsn:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                desc:
+                  type: string
+                price:
+                  type: number
+              required: 
+                - title
+                - price
+            example:
+              title: Espresso Macchiato
+              desc: Espresso med skummad mjölk
+              price: 49
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              example:
+                success: true
+                message: Product updated successfully
+                product:
+                  _id: "6837071d483f8c68b54bfd33"
+                  prodId: "prod-jespe"
+                  title: "Espresso Macchiato"
+                  desc: "Espresso med skummad mjölk"
+                  price: 45
+                  modifiedAt: "2025-06-07T14:23:45.000Z"
+        '403':
+          description: Only admins can update products
+          content:
+            application/json:
+              example:
+                success: false
+                message: Only admins can update products
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              example:
+                success: false
+                message: Could not update product
+    delete:
+      tags:
+        - Menu
+      summary: Delete Product (admin only)
+      description: Requires a valid JWT token from an admin user.
+      security:
+        bearerAuth: []
+      parameters:
+        - in: path
+          name: prodId
+          required: true
+          schema:
+            type: string
+          description: The ID of the product to delete
+      responses:
+        '200':
+          description: Product deleted successfully
+          content:
+            application/json:
+              example:
+                success: true
+                message: Product deleted successfully
+                product:
+                  _id: "6837071d483f8c68b54bfd33"
+                  prodId: "prod-jespe"
+                  title: "Espresso"
+                  desc: "Strong coffee"
+                  price: 40
+        '403':
+          description: Only admins can delete products
+          content:
+            application/json:
+              example:
+                success: false
+                message: Only admins can delete products
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              example:
+                success: false
+                message: Could not delete product
+  /api/orders:
+    get:
+      tags:
+        - Orders
+    post:
+      tags:
+        - Orders
+  /api/orders/{userId}:
+    get:
+      tags:
+        - Orders
