@@ -1,4 +1,6 @@
 import Cart from '../models/cart.js';
+import Product from '../models/product.js';
+import { v4 as uuid } from 'uuid';
 
 export async function getAllCarts() {
   try {
@@ -60,4 +62,31 @@ export async function updateCart(userId, product) {
     console.log(error.message);
     return null;
   }
+}
+
+export async function updateCartWithProduct(prodId, qty, userId) {
+  if (!Number.isInteger(qty) || qty <= 0) {
+    throw { status: 400, message: 'Quantity must be a positive integer' };
+  }
+
+  const product = await Product.findOne({ prodId });
+  if (!product) {
+    throw { status: 400, message: 'Invalid product ID' };
+  }
+
+  const cart = await updateCart(userId, {
+    prodId: product.prodId,
+    title: product.title,
+    price: product.price,
+    qty,
+  });
+
+  if (!cart) {
+    throw { status: 400, message: 'Could not update cart' };
+  }
+
+  return {
+    cart,
+    guestId: userId.startsWith('guest-') ? userId : undefined,
+  };
 }
