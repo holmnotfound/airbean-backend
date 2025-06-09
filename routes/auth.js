@@ -86,7 +86,7 @@ router.post('/register', validateAuthBody, async (req, res, next) => {
 router.get('/logout', (req, res) => {
   res.json({
     success: true,
-    message: 'Logout successful. Please remove token on client side.'
+    message: 'Logout successful.'
   });
 });
 
