@@ -7,6 +7,8 @@ const productSchema = new Schema({
   title: { type: String, required: true },
   desc: { type: String },
   price: { type: Number, required: true },
+  createdAt: {type: Date},
+  modifiedAt: {type: Date}
 });
 
 const Product = mongoose.model('Product', productSchema);

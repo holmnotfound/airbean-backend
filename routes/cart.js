@@ -1,13 +1,17 @@
-import { Router } from 'express';
-import { v4 as uuid } from 'uuid';
-import { getProduct } from '../services/products.js';
-import { updateCart, getOrCreateCart, getAllCarts } from '../services/cart.js';
-import { calculateTotal } from '../utils/cartUtils.js';
+import { Router } from "express";
+import { v4 as uuid } from "uuid";
+import {
+  updateCartWithProduct,
+  getOrCreateCart,
+  getAllCarts,
+} from "../services/cart.js";
+import { calculateTotal } from "../utils/cartUtils.js";
+import { optionalAuthenticateToken } from "../middlewares/optinalAuthToken.js";
 
 const router = Router();
 
 //GET all carts
-router.get('/', async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   const carts = await getAllCarts();
   if (carts) {
     res.json({
@@ -17,13 +21,13 @@ router.get('/', async (req, res, next) => {
   } else {
     next({
       status: 500,
-      message: 'Could not retrieve carts',
+      message: "Could not retrieve carts",
     });
   }
 });
 
 // GET cart by ID
-router.get('/:id', async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   const { id } = req.params;
 
   const cart = await getOrCreateCart(id);
@@ -38,80 +42,39 @@ router.get('/:id', async (req, res, next) => {
     } else {
       res.json({
         success: true,
-        message: 'Cart is empty',
+        message: "Cart is empty",
       });
     }
   } else {
     next({
       status: 500,
-      message: 'Could not get or create cart',
+      message: "Could not get or create cart",
     });
   }
 });
 
-// PUT item in cart
-router.put('/', async (req, res, next) => {
-  if (global.user) {
-    const { userId } = global.user;
-    const { prodId, qty } = req.body;
-    const product = await getProduct(prodId);
+//Update Cart
+router.put("/", optionalAuthenticateToken, async (req, res, next) => {
+  const { prodId, qty, guestId } = req.body;
 
-    if (product) {
-      const cart = await updateCart(userId, {
-        prodId: product.prodId,
-        title: product.title,
-        price: product.price,
-        qty: qty,
-      });
-      if (cart) {
-        res.json({
-          success: true,
-          cart,
-        });
-      } else {
-        next({
-          status: 400,
-          message: 'Quantity must be provided as a positive integer',
-        });
-      }
-    } else {
-      next({
-        status: 400,
-        message: 'Invalid product ID',
-      });
-    }
-  } else {
-    let { guestId, prodId, qty } = req.body;
-    const product = await getProduct(prodId);
+  const isLoggedIn = !!req.user;
+  const userId = isLoggedIn
+    ? req.user.userId // används även som cartId
+    : guestId || `guest-${uuid().substring(0, 5)}`;
 
-    if (!guestId) {
-      guestId = `guest-${uuid().substring(0, 5)}`;
-    }
+  try {
+    const { cart } = await updateCartWithProduct(prodId, qty, userId);
 
-    if (product) {
-      const cart = await updateCart(guestId, {
-        prodId: product.prodId,
-        title: product.title,
-        price: product.price,
-        qty: qty,
-      });
-      if (cart) {
-        res.json({
-          success: true,
-          cart,
-        });
-      } else {
-        next({
-          status: 400,
-          message: 'Quantity must be provided as a positive integer',
-        });
-      }
-    } else {
-      next({
-        status: 400,
-        message: 'Invalid product ID',
-      });
-    }
+    res.json({
+      success: true,
+      cart,
+      ...(isLoggedIn ? { userId } : { guestId: userId }), // dynamisk nyckel
+    });
+  } catch (error) {
+    next({
+      status: error.status || 500,
+      message: error.message || "Could not update cart",
+    });
   }
 });
 
