@@ -1,84 +1,90 @@
-Länk till våra [protokoll](https://docs.google.com/document/d/1-mBPtD7eAFldhDcizoohj4CJ8XRISGdYNQJnY_biidc/edit?tab=t.0#heading=h.8mm0oodu45l3)
+# ☕ Airbean Admin – Individuell uppgift
 
-# ☕ Bygg ett API för Airbean!
+I denna **individuella del av examinationen** ska du bygga vidare på Airbean-API:t. Denna gång är det dags att skapa ett **admin-gränssnitt för att hantera kaffemenyn**.
 
-Airbean är den futuristiska kaffebaren där kaffe levereras med drönare (nåja… nästan!). I detta **grupparbete** ska ni bygga ett backend-API som gör det möjligt att lägga beställningar – men bara själva API:t. **Ingen frontend** ska byggas.
-
-En inspelad presentation av uppgiften [hittar ni här](https://vimeo.com/1088326956/f0e770176d?share=copy)
+Fokus ligger på backend – **ingen frontend** ska byggas.
 
 ---
 
 ## 🧩 Uppgiften
 
-Ni ska tillsammans bygga ett REST API för Airbean, där användare ska kunna:
+Du ska bygga tre skyddade endpoints där en admin kan:
 
-- Se kaffemenyn
-- Lägga till/ta bort varor i en kundvagn
-- Lägga en order
-- Se tidigare orderar kopplade till ett unikt användar-ID
-- Skapa konton och logga in
+- **Lägga till** en ny produkt i menyn
+- **Uppdatera** en befintlig produkt
+- **Ta bort** en produkt från menyn
 
-Ni får en färdig meny att utgå från, och det är endast produkterna i den som ska kunna beställas. Menyn lägger ni till manuellt via MongoDBCompass.  
-**Länk till menyn:**  
-👉 [Airbean Products](airbean.products.json)
+Menyn ska hanteras i en **egen databas** och arbetet ska ske i ett **eget repo**. Du kan använda er befintliga gruppkod som grund, eller välja att börja om med den bifogade startkoden.
 
 ---
 
-## ✅ Krav (för Godkänt)
+## 🛠️ Praktiskt
 
-- API:et ska vara byggt i **Node.js med Express**
-- Databasen ska vara **MongoDB**
-- All input som kommer in via URL eller request body ska **valideras i middleware**:
-  - Felaktig data ska returnera ett tydligt **felmeddelande**
-- Endast produkter från menyn får läggas till i en beställning
-- När ett **användarkonto** skapas ska det få ett **slumpat användar-ID**
-- Orderhistorik ska kunna hämtas med användar-ID (**inte** användarnamn)
-- Koden ska vara **välstrukturerad och läsbar**
-- Era endpoints och er logik MÅSTE följa dokumentationen som [ni hittar här](https://gist.github.com/Santosnr6/82cb658f21006799767cea1f1f90fd53). Det är enligt denna logik jag kommer testa ert API när jag rättar så se till att följa den.
-
-**Viktigt!**
-Ni får INTE använda er av kryptering för att säkra lösenord, samt tokens för användarautentisering i denna uppgift. Istället vill jag att ni sätter `global.user = user` när ni har en inloggad användare, samt `global.user = null` när användaren loggat ut.
+- Skapa ett **eget nytt GitHub-repo** för din individuella kod.
+- Kopiera in gruppens kod i ditt repo **eller** utgå från den tillhandahållna kod som finns i `startkod`-mappen.
+- Skapa en **egen MongoDB-databas** (du får alltså inte använda gruppens).
+- Skapa en **menu-collection** och lägg in menyn manuellt via MongoDB Compass.
+- Dokumentationen från del 1 har uppdaterats och den [hittar ni här](https://gist.github.com/Santosnr6/82cb658f21006799767cea1f1f90fd53). 3 nya endpoints har lagts till, och registrera ny användare har uppdaterats.
+- Ni som skall **komplettera gruppexaminationen** hittar era instruktioner längst ner i dokumentationen ovan, under avsnittet "Komplettering". Övriga får naturigtvis också göra dessa uppgifter om man så önskar.
+- Ge **läraren**:
+  - Network Access till din databas (IP: `2.248.92.11`)
+  - Din **Connection String** både för Compass och Drivers – skriv dem i en **kommentar i din inlämning** (lägg även in kontouppgifterna för den användare ni skapar åt mig). (Se till att fixa deta då jag inte kommer påminna er, missar ni blir det komplettering)
 
 ---
 
-## 👥 Grupparbete
+## ✅ Krav för Godkänt
 
-### 📄 Gruppkontrakt
+- ### ➕ Lägga till ny produkt
+  - Endpoint ska acceptera ett objekt i `req.body` med följande egenskaper: `title`, `desc`, `price`.
+  - Alla egenskaper måste finnas med
+  - Lägg till `prodId` och `createdAt` när en produkt skapas
 
-Varje grupp skriver ett **gruppkontrakt** där ni själva bestämmer vilka punkter som gäller. Använd gärna [detta dokument](https://docs.google.com/document/d/1HZc1a_mxGOrEE77rFTZ3LydQ_zZfBlfm/edit?usp=sharing&ouid=117251319654116712560&rtpof=true&sd=true) som mall.  
-Detta används om konflikter skulle uppstå. Om ett kontrakt inte finns, riskerar hela gruppen att bli underkänd vid problem.
+- ### ✏️ Uppdatera produkt
+  - Uppdatera valfri befintlig produkt
+  - Lägg automatiskt till ett fält `modifiedAt` med aktuell tid
 
-### 📁 Repo & arbetsyta
+- ### ❌ Ta bort produkt
+  - Produkten ska tas bort om den finns
+  - Om produkten inte finns ska ett tydligt felmeddelande returneras
 
-- En gruppmedlem skapar ett **GitHub-repo** och bjuder in övriga
-- Sätt upp en **projekttavla** i GitHub Projects eller Trello
-- Till er hjälp har ni följande [user stories](https://github.com/users/Santosnr6/projects/27)
+- ### 🔐 Skyddade endpoints
+  - Alla tre endpoints ska vara skyddade av en **admin-middleware**
+  - Kontrollera att användaren är inloggad och har rollen `"admin"`
+
+- ### ⚠️ Felhantering
+  - Fel (t.ex. ogiltiga fält, obehörig användare, icke-existerande produkt) ska returnera **relevanta felmeddelanden**
 
 ---
 
-## 🧪 Tips
+## 🌟 VG-krav
 
-- Testa era endpoints i **Postman** eller **Insomnia**
-- Ge era users en **role**-property (det kommer underlätta inför den individuella examinationen)
-- Dela upp arbetet: t.ex. konton, beställningar, validering
-- Lägg all valideringslogik i **middleware**
-- Ha en tydlig projektstruktur: mappar, routes, felhantering
-- Blir era _routes_ för stora så kan ni skapa en controllersmapp som fungerar som en "mellanhand" mellan era routes och services, och där ni kan lägga logiken.
-- Om ni vill träna på Swaggerdokumentation inför den individuella uppgiften så är det fritt fram att skapa en sådan
-- För tydlighetens skull: när ni skapar upp IDn, namnge dem då efter principen **guest-xxxxx**, **user-xxxxx**, **order-xxxxx**, samt **cart-xxxxx**.
+### 🔒 Säkerhet
+
+- Använd **lösenordskryptering** med t.ex. `bcrypt` vid inloggning och registrering
+- Använd **auth tokens** (t.ex. JWT) för att verifiera användare och skydda endpoints
+- För VG ska du **inte** använda `global.user` och du kommer därför behöva skriva om delar av koden från gruppexaminationen
+
+### 📘 Swagger
+
+- Skapa **Swagger-dokumentation** för de tre nya admin-endpoints, samt för alla Auth-endpoints
+- Dokumentationen ska innehålla:
+  - Beskrivning av anropet
+  - Vilka parametrar som krävs
+  - Request body-schema
+  - Response-exempel
+  - Felmeddelanden
+  - Information om att requests kräver token och admin-rättigheter
 
 ---
 
 ## 📥 Inlämning
 
-Alla i gruppen lämnar in en **länk till ert gemensamma GitHub-repo** på Azomo  
-**Deadline: Torsdag 5/6 kl 23:59**
+Ladda upp din kod i ett **eget repo** och lämna in **länken på Azomo** senast:  
+🗓️ **Torsdag 13/6 kl 23:59**
 
-⚠️ Glöm inte:
+Din inlämning ska innehålla:
 
-- Att bjuda in mig till ert repo
-- Att dela er projekttavla med mig
-- Att skapa en User till mig, samt ge mig Network Access till er databas. Min IP-adress: **2.248.92.11**
-- Lägga in era kompletta connection strings både för Compass och Drivers i kommentarerna för er inlämning.
+- Ditt repo
+- Connection Strings (för Compass & Drivers) som kommentar till inlämningen
 
 ---
